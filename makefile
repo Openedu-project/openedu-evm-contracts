@@ -10,6 +10,11 @@ deploy-fee-receiver:
 	@echo "🚀 Deploying FeeReceiver contract to ${NETWORK}..."
 	@forge script script/deploy/DeployFeeReceiver.s.sol:DeployFeeReceiver --account ${ACCOUNT_CAST_WALLET} --rpc-url ${NETWORK} --etherscan-api-key ${BASESCAN_API_KEY} --broadcast --verify -vvvv
 
+# Deploy vault contract
+deploy-vault:
+	@echo "🚀 Deploying Vault contract to ${NETWORK}..."
+	@forge script script/deploy/DeployVault.s.sol:DeployVault --account ${ACCOUNT_CAST_WALLET} --rpc-url ${NETWORK} --etherscan-api-key ${BASESCAN_API_KEY} --broadcast --verify -vvvv
+
 # Deploy mock USDC contract
 deploy-mock-usdc:
 	@echo "🚀 Deploying MockUSDC contract to ${NETWORK}..."
