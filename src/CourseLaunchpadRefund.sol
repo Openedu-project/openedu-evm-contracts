@@ -103,6 +103,10 @@ contract CourseLaunchpadRefund is ICourseLaunchpadRefund, EIP712 {
     /*//////////////////////////////////////////////////////////////
                             GETTER FUNCTIONS
     //////////////////////////////////////////////////////////////*/
+    function getReceiversRoot(string memory launchpadId) public view returns (bytes32) {
+        return s_refundInfo[launchpadId].receiversRoot;
+    }
+
     function getRefundInfo(string memory launchpadId) public view returns (RefundInfo memory) {
         return s_refundInfo[launchpadId];
     }
