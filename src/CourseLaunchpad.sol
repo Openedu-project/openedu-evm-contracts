@@ -4,29 +4,45 @@ pragma solidity 0.8.26;
 import {ICourseLaunchpad} from "./interfaces/ICourseLaunchpad.sol";
 import {Ownable2Step, Ownable} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {ICourseLaunchpadRefund} from "./interfaces/ICourseLaunchpadRefund.sol";
+import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract CourseLaunchpad is ICourseLaunchpad, Ownable2Step {
+    /*//////////////////////////////////////////////////////////////
+                                  TYPE
+    //////////////////////////////////////////////////////////////*/
     using SafeERC20 for IERC20;
 
+    /*//////////////////////////////////////////////////////////////
+                            STATE VARIABLES
+    //////////////////////////////////////////////////////////////*/
     mapping(string launchpadId => Launchpad) private s_launchpads;
     mapping(string launchpadId => bool isExist) private s_launchpadExist;
     mapping(string launchpadId => mapping(address user => uint256 pledgeAmount)) private s_backerBalances;
     string[] private s_refundingLaunchpads;
-
     uint256 private s_requiredStakeAmount;
     uint256 private s_maxFundingBps; // max total funding percent in a launchpad
     uint256 private s_maxPledgeBps; // max pledge percent in a launchpad of a backer
     uint256 private s_requiredVotingBps; // required total funding percent in a launchpad for voting
+    uint256 private s_maxFundingDuration; // max funding duration in a launchpad
+    mapping(address token => bool isAccepted) private s_isAcceptedToken;
+    address[] private s_acceptedTokens;
 
+    /*//////////////////////////////////////////////////////////////
+                              CONSTRUCTOR
+    //////////////////////////////////////////////////////////////*/
     constructor(address initialOwner) Ownable(initialOwner) {
-        s_requiredStakeAmount = 0.01 ether; // initial required stake amount, can change in the future
+        s_requiredStakeAmount = 0.01 ether;
         s_maxFundingBps = 200000; // 200% = 200000 bps
         s_maxPledgeBps = 2000; // 20% = 2000 bps
         s_requiredVotingBps = 8000; // 80% = 8000 bps
+        s_maxFundingDuration = 30 days;
     }
 
+    /*//////////////////////////////////////////////////////////////
+                               MODIFIERS
+    //////////////////////////////////////////////////////////////*/
     modifier onlyLaunchpadOwner(string memory launchpadId) {
         if (s_launchpads[launchpadId].owner != msg.sender) {
             revert Unauthorized(msg.sender, "Not launchpad owner");
@@ -62,6 +78,26 @@ contract CourseLaunchpad is ICourseLaunchpad, Ownable2Step {
 
     function setRequiredVotingBps(uint256 requiredVotingBps) external onlyOwner {
         s_requiredVotingBps = requiredVotingBps;
+    }
+
+    function setMaxFundingDuration(uint256 maxFundingDuration) external onlyOwner {
+        s_maxFundingDuration = maxFundingDuration;
+    }
+
+    function addAcceptedToken(address token) external onlyOwner {
+        s_isAcceptedToken[token] = true;
+        s_acceptedTokens.push(token);
+    }
+
+    function removeAcceptedToken(address token) external onlyOwner {
+        s_isAcceptedToken[token] = false;
+        for (uint256 i = 0; i < s_acceptedTokens.length; i++) {
+            if (s_acceptedTokens[i] == token) {
+                s_acceptedTokens[i] = s_acceptedTokens[s_acceptedTokens.length - 1];
+                s_acceptedTokens.pop();
+                break;
+            }
+        }
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -116,6 +152,9 @@ contract CourseLaunchpad is ICourseLaunchpad, Ownable2Step {
         LaunchpadStatus currentStatus = launchpad.status;
         if (currentStatus != LaunchpadStatus.APPROVED) {
             revert InvalidStatus(currentStatus, LaunchpadStatus.APPROVED);
+        }
+        if (endFundingTime - startFundingTime > s_maxFundingDuration) {
+            revert InvalidFundingDuration(endFundingTime - startFundingTime, s_maxFundingDuration);
         }
 
         launchpad.status = LaunchpadStatus.FUNDING;
@@ -229,12 +268,14 @@ contract CourseLaunchpad is ICourseLaunchpad, Ownable2Step {
         address launchpadOwner,
         address token,
         uint256 goal,
-        uint256 startFundingTime,
-        uint256 endFundingTime,
         uint256 minPledgeAmount
     ) public payable {
         if (s_launchpads[launchpadId].owner != address(0)) {
             revert LaunchpadAlreadyExists(launchpadId);
+        }
+
+        if (!s_isAcceptedToken[token]) {
+            revert InvalidToken(token);
         }
 
         if (msg.value != s_requiredStakeAmount) {
@@ -248,14 +289,14 @@ contract CourseLaunchpad is ICourseLaunchpad, Ownable2Step {
             availableClaim: 0,
             totalPledged: 0,
             raised: 0,
-            startFundingTime: startFundingTime,
-            endFundingTime: endFundingTime,
+            startFundingTime: 0,
+            endFundingTime: 0,
             stakeAmount: msg.value,
             minPledgeAmount: minPledgeAmount,
             status: LaunchpadStatus.INIT
         });
 
-        emit LaunchpadCreated(launchpadId, launchpadOwner, token, goal, startFundingTime, endFundingTime);
+        emit LaunchpadCreated(launchpadId, launchpadOwner, token, goal);
     }
 
     function pledgeNative(string memory launchpadId) public payable onlyFundingLaunchpad(launchpadId) {
@@ -266,10 +307,8 @@ contract CourseLaunchpad is ICourseLaunchpad, Ownable2Step {
             revert InvalidAmount(msg.value, launchpad.minPledgeAmount);
         }
 
-        uint256 maxPledgeAmount = (launchpad.goal * s_maxPledgeBps) / 10000;
-        if (s_backerBalances[launchpadId][msg.sender] + msg.value > maxPledgeAmount) {
-            revert InvalidAmount(msg.value, maxPledgeAmount);
-        }
+        _validateMaxPledgeAmount(s_backerBalances[launchpadId][msg.sender] + msg.value, launchpad.goal);
+        _validateMaxFundingAmount(launchpad.raised + msg.value, launchpad.goal);
 
         launchpad.raised += msg.value;
         launchpad.totalPledged += msg.value;
@@ -285,12 +324,38 @@ contract CourseLaunchpad is ICourseLaunchpad, Ownable2Step {
             revert InvalidAmount(amount, launchpad.minPledgeAmount);
         }
 
-        uint256 maxPledgeAmount = (launchpad.goal * s_maxPledgeBps) / 10000;
-        if (s_backerBalances[launchpadId][msg.sender] + amount > maxPledgeAmount) {
-            revert InvalidAmount(amount, maxPledgeAmount);
-        }
+        _validateMaxPledgeAmount(s_backerBalances[launchpadId][msg.sender] + amount, launchpad.goal);
+        _validateMaxFundingAmount(launchpad.raised + amount, launchpad.goal);
 
         IERC20(launchpad.token).safeTransferFrom(msg.sender, address(this), amount);
+        launchpad.raised += amount;
+        launchpad.totalPledged += amount;
+        s_backerBalances[launchpadId][msg.sender] += amount;
+
+        emit FundingAction(launchpadId, msg.sender, amount, "pledge");
+    }
+
+    function pledgeERC20withPermit(
+        string memory launchpadId,
+        uint256 amount,
+        uint256 fee,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) public onlyFundingLaunchpad(launchpadId) {
+        Launchpad storage launchpad = s_launchpads[launchpadId];
+        if (launchpad.token == address(0)) revert InvalidToken(address(0));
+        if (amount < launchpad.minPledgeAmount) {
+            revert InvalidAmount(amount, launchpad.minPledgeAmount);
+        }
+
+        _validateMaxPledgeAmount(s_backerBalances[launchpadId][msg.sender] + amount, launchpad.goal);
+        _validateMaxFundingAmount(launchpad.raised + amount, launchpad.goal);
+
+        IERC20Permit(launchpad.token).permit(msg.sender, address(this), amount + fee, deadline, v, r, s);
+        IERC20(launchpad.token).safeTransferFrom(msg.sender, address(this), amount);
+        IERC20(launchpad.token).safeTransferFrom(msg.sender, address(this), fee);
         launchpad.raised += amount;
         launchpad.totalPledged += amount;
         s_backerBalances[launchpadId][msg.sender] += amount;
@@ -326,6 +391,20 @@ contract CourseLaunchpad is ICourseLaunchpad, Ownable2Step {
             }
         }
         return false;
+    }
+
+    function _validateMaxPledgeAmount(uint256 backerBalance, uint256 goal) internal view {
+        uint256 maxPledgeAmount = (goal * s_maxPledgeBps) / 10000;
+        if (backerBalance > maxPledgeAmount) {
+            revert InvalidAmount(backerBalance, maxPledgeAmount);
+        }
+    }
+
+    function _validateMaxFundingAmount(uint256 raised, uint256 goal) internal view {
+        uint256 maxFundingAmount = (goal * s_maxFundingBps) / 10000;
+        if (raised > maxFundingAmount) {
+            revert InvalidAmount(raised, maxFundingAmount);
+        }
     }
 
     /*//////////////////////////////////////////////////////////////
