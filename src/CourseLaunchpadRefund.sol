@@ -5,10 +5,9 @@ import {ICourseLaunchpadRefund} from "./interfaces/ICourseLaunchpadRefund.sol";
 import {IERC20, SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {Ownable2Step, Ownable} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
-contract CourseLaunchpadRefund is ICourseLaunchpadRefund, Ownable2Step, EIP712 {
+contract CourseLaunchpadRefund is ICourseLaunchpadRefund, EIP712 {
     /*//////////////////////////////////////////////////////////////
                                   TYPE
     //////////////////////////////////////////////////////////////*/
@@ -31,23 +30,24 @@ contract CourseLaunchpadRefund is ICourseLaunchpadRefund, Ownable2Step, EIP712 {
         bytes32 receiversRoot;
     }
 
-    mapping(uint256 launchpadId => RefundInfo) private s_refundInfo;
-
-    mapping(uint256 launchpadId => mapping(address account => bool claimed)) private s_isClaimed;
+    mapping(string => RefundInfo) private s_refundInfo;
+    mapping(string => mapping(address => bool)) private s_isClaimed;
+    address public immutable i_courseLaunchpad;
 
     /*//////////////////////////////////////////////////////////////
                               CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
-    constructor(address initialOwner) Ownable(initialOwner) EIP712("Course Payment Refund", "1.0.0") {}
+    constructor(address courseLaunchpad) EIP712("Course Launchpad Refund", "1.0.0") {
+        i_courseLaunchpad = courseLaunchpad;
+    }
 
     /*//////////////////////////////////////////////////////////////
                               EXTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////*/
-    function createRefund(uint256 launchpadId, address token, uint256 amount, bytes32 receiversRoot)
-        external
-        onlyOwner
-    {
-        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+    function createRefund(string memory launchpadId, address token, uint256 amount, bytes32 receiversRoot) external {
+        if (msg.sender != i_courseLaunchpad) revert CourseLaunchpadRefund__OnlyCourseLaunchpad();
+
+        IERC20(token).safeTransferFrom(i_courseLaunchpad, address(this), amount);
 
         s_refundInfo[launchpadId] = RefundInfo({token: token, amount: amount, receiversRoot: receiversRoot});
 
@@ -55,7 +55,7 @@ contract CourseLaunchpadRefund is ICourseLaunchpadRefund, Ownable2Step, EIP712 {
     }
 
     function claimRefund(
-        uint256 launchpadId,
+        string memory launchpadId,
         address account,
         uint256 amount,
         bytes32[] calldata merkleProof,
@@ -91,7 +91,6 @@ contract CourseLaunchpadRefund is ICourseLaunchpadRefund, Ownable2Step, EIP712 {
         pure
         returns (bool)
     {
-        // could also use SignatureChecker.isValidSignatureNow(signer, digest, signature)
         (
             address actualSigner,
             /*ECDSA.RecoverError recoverError*/
@@ -104,7 +103,7 @@ contract CourseLaunchpadRefund is ICourseLaunchpadRefund, Ownable2Step, EIP712 {
     /*//////////////////////////////////////////////////////////////
                             GETTER FUNCTIONS
     //////////////////////////////////////////////////////////////*/
-    function getRefundInfo(uint256 launchpadId) public view returns (RefundInfo memory) {
+    function getRefundInfo(string memory launchpadId) public view returns (RefundInfo memory) {
         return s_refundInfo[launchpadId];
     }
 
@@ -113,7 +112,7 @@ contract CourseLaunchpadRefund is ICourseLaunchpadRefund, Ownable2Step, EIP712 {
             _hashTypedDataV4(keccak256(abi.encode(MESSAGE_TYPEHASH, PaymentClaim({account: account, amount: amount}))));
     }
 
-    function isClaimed(uint256 launchpadId, address account) public view returns (bool) {
+    function isClaimed(string memory launchpadId, address account) public view returns (bool) {
         return s_isClaimed[launchpadId][account];
     }
 }
