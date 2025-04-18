@@ -25,6 +25,16 @@ deploy-course-payment:
 	@echo "🚀 Deploying CoursePayment contract to ${NETWORK}..."
 	@forge script script/deploy/DeployCoursePayment.s.sol:DeployCoursePayment --account ${ACCOUNT_CAST_WALLET} --rpc-url ${NETWORK} --etherscan-api-key ${BASESCAN_API_KEY} --broadcast --verify -vvvv
 
+# Deploy course launchpad contract
+deploy-course-launchpad:
+	@echo "🚀 Deploying CourseLaunchpad contract to ${NETWORK}..."
+	@forge script script/deploy/DeployCourseLaunchpad.s.sol:DeployCourseLaunchpad --account ${ACCOUNT_CAST_WALLET} --rpc-url ${NETWORK} --etherscan-api-key ${BASESCAN_API_KEY} --broadcast --verify -vvvv
+
+# Deploy course launchpad refund contract
+deploy-course-launchpad-refund:
+	@echo "🚀 Deploying CourseLaunchpadRefund contract to ${NETWORK}..."
+	@forge script script/deploy/DeployCourseLaunchpadRefund.s.sol:DeployCourseLaunchpadRefund --account ${ACCOUNT_CAST_WALLET} --rpc-url ${NETWORK} --etherscan-api-key ${BASESCAN_API_KEY} --broadcast --verify -vvvv
+
 # Clean artifacts and cache
 clean:
 	@echo "🧹 Cleaning..."

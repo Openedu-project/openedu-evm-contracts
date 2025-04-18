@@ -21,14 +21,4 @@ interface ICourseLaunchpadRefund {
                               EXTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////*/
     function createRefund(string memory launchpadId, address token, uint256 amount, bytes32 receiversRoot) external;
-
-    function claimRefund(
-        string memory launchpadId,
-        address account,
-        uint256 amount,
-        bytes32[] calldata merkleProof,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external;
 }

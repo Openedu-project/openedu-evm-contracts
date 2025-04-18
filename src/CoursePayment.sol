@@ -5,11 +5,10 @@ import {Ownable2Step, Ownable} from "@openzeppelin/contracts/access/Ownable2Step
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {Vault} from "./Vault.sol";
 import {FeeReceiver} from "./FeeReceiver.sol";
 
-contract CoursePayment is Ownable2Step, ReentrancyGuard, EIP712 {
+contract CoursePayment is Ownable2Step, ReentrancyGuard {
     /*//////////////////////////////////////////////////////////////
                                   TYPE
     //////////////////////////////////////////////////////////////*/
@@ -31,24 +30,13 @@ contract CoursePayment is Ownable2Step, ReentrancyGuard, EIP712 {
     Vault private s_vault;
     FeeReceiver private s_feeReceiver;
 
-    // define the message hash struct
-    struct PaymentClaim {
-        address account;
-        uint256 amount;
-    }
-
-    bytes32 private constant MESSAGE_TYPEHASH = keccak256("PaymentClaim(address account,uint256 amount)");
-
     mapping(address user => mapping(string courseId => bool isPaid)) private s_isUserPaid;
     mapping(address token => bool isAllowed) private s_allowedTokens;
 
     /*//////////////////////////////////////////////////////////////
                               CONSTRUCTORS
     //////////////////////////////////////////////////////////////*/
-    constructor(address initialOwner, address vault, address feeReceiver)
-        Ownable(initialOwner)
-        EIP712("Course Payment", "1.0.0")
-    {
+    constructor(address initialOwner, address vault, address feeReceiver) Ownable(initialOwner) {
         s_vault = Vault(vault);
         s_feeReceiver = FeeReceiver(feeReceiver);
     }
@@ -58,7 +46,6 @@ contract CoursePayment is Ownable2Step, ReentrancyGuard, EIP712 {
     //////////////////////////////////////////////////////////////*/
     event CoursePaid(address indexed user, string courseId);
     event CoursePaidWithPermit(address indexed user, string courseId);
-    event PaymentClaimed(uint256 indexed paymentId, address indexed account, uint256 amount);
 
     /*//////////////////////////////////////////////////////////////
                                MODIFIERS

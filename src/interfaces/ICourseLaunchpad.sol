@@ -2,6 +2,9 @@
 pragma solidity ^0.8.20;
 
 interface ICourseLaunchpad {
+    /*//////////////////////////////////////////////////////////////
+                                  TYPE
+    //////////////////////////////////////////////////////////////*/
     enum LaunchpadStatus {
         INIT,
         REJECTED,
@@ -30,7 +33,9 @@ interface ICourseLaunchpad {
         LaunchpadStatus status;
     }
 
-    // Optimized errors
+    /*//////////////////////////////////////////////////////////////
+                                  ERRORS
+    //////////////////////////////////////////////////////////////*/
     error InvalidAmount(uint256 provided, uint256 required);
     error InvalidToken(address token);
     error InvalidStatus(LaunchpadStatus current, LaunchpadStatus required);
@@ -39,13 +44,11 @@ interface ICourseLaunchpad {
     error TransactionFailed(string reason);
     error LaunchpadAlreadyExists(string launchpadId);
 
-    // Optimized events
+    /*//////////////////////////////////////////////////////////////
+                                  EVENTS
+    //////////////////////////////////////////////////////////////*/
     event LaunchpadCreated(string indexed launchpadId, address indexed owner, address indexed token, uint256 goal);
-
     event LaunchpadStatusUpdated(string indexed launchpadId, LaunchpadStatus oldStatus, LaunchpadStatus newStatus);
-
-    event FundingAction( // "pledge", "claim", "refund"
-    string indexed launchpadId, address indexed actor, uint256 amount, string actionType);
-
+    event FundingAction(string indexed launchpadId, address indexed actor, uint256 amount, string actionType); // actionType: "pledge", "claim", "refund"
     event VotingResult(string indexed launchpadId, uint256 availableClaim, bool successful);
 }

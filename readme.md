@@ -19,6 +19,8 @@
 
 ## Course Launchpad
 
+- CourseLaunchpad: [0x00d2Af3Fb85cEA186006cf379E119219E2102e5e](https://sepolia.basescan.org/address/0x00d2af3fb85cea186006cf379e119219e2102e5e)
+
 1. Launchpad Campaign có 2 loại: 
 - Native token (pledge bằng ETH)
 - Token ERC20 (bất kỳ loại nào)

@@ -379,7 +379,7 @@ contract CourseLaunchpad is ICourseLaunchpad, Ownable2Step {
     /*//////////////////////////////////////////////////////////////
                            INTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////*/
-    function _removeRefundingLaunchpad(string memory _value) public returns (bool) {
+    function _removeRefundingLaunchpad(string memory _value) internal returns (bool) {
         uint256 length = s_refundingLaunchpads.length;
         for (uint256 i = 0; i < length; i++) {
             if (keccak256(bytes(s_refundingLaunchpads[i])) == keccak256(bytes(_value))) {
@@ -393,6 +393,7 @@ contract CourseLaunchpad is ICourseLaunchpad, Ownable2Step {
         return false;
     }
 
+    // TODO: change to validatePledgeAmount
     function _validateMaxPledgeAmount(uint256 backerBalance, uint256 goal) internal view {
         uint256 maxPledgeAmount = (goal * s_maxPledgeBps) / 10000;
         if (backerBalance > maxPledgeAmount) {
