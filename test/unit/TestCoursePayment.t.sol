@@ -2,10 +2,10 @@
 pragma solidity 0.8.26;
 
 import {Test, console} from "forge-std/Test.sol";
-import {CoursePayment} from "../src/CoursePayment.sol";
-import {Vault} from "../src/Vault.sol";
-import {FeeReceiver} from "../src/FeeReceiver.sol";
-import {ERC20PermitMock} from "./mocks/ERC20PermitMock.sol";
+import {CoursePayment} from "../../src/CoursePayment.sol";
+import {Vault} from "../../src/Vault.sol";
+import {FeeReceiver} from "../../src/FeeReceiver.sol";
+import {ERC20PermitMock} from "../mocks/ERC20PermitMock.sol";
 
 contract TestCoursePayment is Test {
     CoursePayment coursePayment;
