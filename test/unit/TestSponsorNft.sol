@@ -2,7 +2,7 @@
 pragma solidity 0.8.26;
 
 import {Test} from "forge-std/Test.sol";
-import {SponsorNFT} from "../../src/SponsorNFT.sol";
+import {SponsorNFT} from "src/SponsorNFT.sol";
 
 contract TestSponsorNFT is Test {
     SponsorNFT sponsorNFT;
