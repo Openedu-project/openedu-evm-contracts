@@ -1,24 +1,24 @@
 {
-    "name": "OpenEdu Certificate: Introduction to Blockchain",
-    "description": "This certificate verifies successful completion of Introduction to Blockchain by Tuong Thai",
+    "name": "OpenEdu Certificate: [Course Name]",
+    "description": "This certificate verifies successful completion of [Course Name] by [Student Name]",
     "image": "https://img.freepik.com/free-vector/vintage-achievement-certificate-template-vector-professional-design-blue_53876-157583.jpg",
     "external_url": "https://vbiacademy.edu.vn/en/courses/web3-development-with-solidity",
     "attributes": [
         {
             "trait_type": "Course Name",
-            "value": "Introduction to Blockchain"
+            "value": "[Course Name]"
         },
         {
             "trait_type": "Student Name",
-            "value": "Tuong Thai"
+            "value": "[Student Name]"
         },
         {
             "trait_type": "Student Address",
-            "value": "0x123..."
+            "value": "[Student Address]"
         },
         {
             "trait_type": "Issuer",
-            "value": "OpenEdu Academy"
+            "value": "[Issuer]"
         },
         {
             "trait_type": "Issue Date",
