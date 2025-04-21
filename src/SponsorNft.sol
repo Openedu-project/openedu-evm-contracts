@@ -16,6 +16,8 @@ contract SponsorNFT is ERC721, Ownable2Step, EIP712, ERC721URIStorage {
     error SponsorNFT__InvalidSignature();
     error SponsorNFT__AlreadyMinted();
     error SponsorNFT__TokenNotFound();
+    error SponsorNFT__SignatureExpired();
+    error SponsorNFT__SignatureUsed();
 
     constructor(address initialOwner, string memory name, string memory symbol)
         Ownable(initialOwner)
@@ -34,10 +36,18 @@ contract SponsorNFT is ERC721, Ownable2Step, EIP712, ERC721URIStorage {
     struct Approve {
         address account;
         uint256 tokenId;
+        uint256 nonce;
+        uint256 deadline;
+        uint256 chainId;
     }
 
-    bytes32 private constant MESSAGE_TYPEHASH = keccak256("Approve(address account,uint256 tokenId)");
+    bytes32 private constant MESSAGE_TYPEHASH =
+        keccak256("Approve(address account,uint256 tokenId,uint256 nonce,uint256 deadline,uint256 chainId)");
+
     uint256 private s_tokenCounter;
+
+    // Mapping to track used nonces
+    mapping(bytes32 => bool) private s_usedNonces;
 
     /*//////////////////////////////////////////////////////////////
                             OWNER FUNCTIONS
@@ -59,12 +69,36 @@ contract SponsorNFT is ERC721, Ownable2Step, EIP712, ERC721URIStorage {
         emit Minted(account, tokenId, tokenUri);
     }
 
-    function mintWithPermit(address account, string memory tokenUri, bytes32 digest, uint8 _v, bytes32 _r, bytes32 _s)
-        public
-    {
+    function mintWithPermit(
+        address account,
+        string memory tokenUri,
+        uint256 nonce,
+        uint256 deadline,
+        bytes32 digest,
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s
+    ) public {
+        // Check if signature has expired
+        if (block.timestamp > deadline) {
+            revert SponsorNFT__SignatureExpired();
+        }
+
+        // Create a unique identifier for this signature by hashing the digest with the nonce
+        bytes32 signatureId = keccak256(abi.encodePacked(digest, nonce));
+
+        // Check if this signature has been used
+        if (s_usedNonces[signatureId]) {
+            revert SponsorNFT__SignatureUsed();
+        }
+
+        // Verify signature
         if (!_isValidSignature(owner(), digest, _v, _r, _s)) {
             revert SponsorNFT__InvalidSignature();
         }
+
+        // Mark signature as used
+        s_usedNonces[signatureId] = true;
 
         uint256 tokenId = s_tokenCounter;
 
@@ -91,16 +125,30 @@ contract SponsorNFT is ERC721, Ownable2Step, EIP712, ERC721URIStorage {
         ) = ECDSA.tryRecover(digest, _v, _r, _s);
         return (actualSigner == signer);
     }
+
     /*//////////////////////////////////////////////////////////////
                             GETTER FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    function getMessageHash(address account, uint256 tokenId) public view returns (bytes32) {
-        return _hashTypedDataV4(keccak256(abi.encode(MESSAGE_TYPEHASH, Approve({account: account, tokenId: tokenId}))));
+    function getMessageHash(address account, uint256 tokenId, uint256 nonce, uint256 deadline)
+        public
+        view
+        returns (bytes32)
+    {
+        return
+            _hashTypedDataV4(keccak256(abi.encode(MESSAGE_TYPEHASH, account, tokenId, nonce, deadline, block.chainid)));
     }
 
     function tokenCounter() public view returns (uint256) {
         return s_tokenCounter;
+    }
+
+    function isSignatureUsed(bytes32 signatureId) public view returns (bool) {
+        return s_usedNonces[signatureId];
+    }
+
+    function getSignatureId(bytes32 digest, uint256 nonce) public pure returns (bytes32) {
+        return keccak256(abi.encodePacked(digest, nonce));
     }
 
     function supportsInterface(bytes4 interfaceId)

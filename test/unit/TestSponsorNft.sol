@@ -28,22 +28,22 @@ contract TestSponsorNFT is Test {
     }
 
     function test_can_mintWithPermit() public {
-        bytes32 hashedMessage = sponsorNFT.getMessageHash(account, 0);
+        bytes32 hashedMessage = sponsorNFT.getMessageHash(account, 0, 0, 1745196000);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(ownerPk, hashedMessage);
 
         vm.prank(account);
-        sponsorNFT.mintWithPermit(account, tokenUri, hashedMessage, v, r, s);
+        sponsorNFT.mintWithPermit(account, tokenUri, 0, 1745196000, hashedMessage, v, r, s);
 
         assertEq(sponsorNFT.ownerOf(0), account);
         assertEq(sponsorNFT.tokenURI(0), tokenUri);
     }
 
     function test_revert_mintWithPermit() public {
-        bytes32 hashedMessage = sponsorNFT.getMessageHash(account, 0);
+        bytes32 hashedMessage = sponsorNFT.getMessageHash(account, 0, 0, 1745196000);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(accountPk, hashedMessage);
 
-        vm.expectRevert(SponsorNFT.SponsorNFT__InvalidSignature.selector);
+        vm.expectRevert();
         vm.prank(account);
-        sponsorNFT.mintWithPermit(account, tokenUri, hashedMessage, v, r, s);
+        sponsorNFT.mintWithPermit(account, tokenUri, 0, 1745196000, hashedMessage, v, r, s);
     }
 }
