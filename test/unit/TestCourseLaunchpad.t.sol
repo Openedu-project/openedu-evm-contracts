@@ -18,6 +18,9 @@ contract TestCourseLaunchpad is Test {
         courseLaunchpad = new CourseLaunchpad(owner);
 
         vm.deal(launchpadOwner, INIT_ETHER_BALANCE);
+
+        vm.prank(owner);
+        courseLaunchpad.addAcceptedToken(address(0));
     }
 
     function test_can_initLaunchpad() public {
