@@ -1,0 +1,73 @@
+
+## Token URI
+
+- OpenSea Metadata Standards: https://docs.opensea.io/docs/metadata-standards
+- ERC721 Documentation: https://github.com/ethereum/ercs/blob/master/ERCS/erc-721.md
+
+
+Example Token URI:
+`[tokenId].json`
+```json
+{
+  "name": "OpenEdu Certificate: Blockchain Basics",
+  "description": "This certificate verifies successful completion of Blockchain Basics by Tuong Thai",
+  "image": "https://img.freepik.com/free-vector/vintage-achievement-certificate-template-vector-professional-design-blue_53876-157583.jpg",
+  "external_url": "https://vbiacademy.edu.vn/en/courses/web3-development-with-solidity",
+  "attributes": [
+    {
+      "trait_type": "Course Name",
+      "value": "Introduction to Blockchain"
+    },
+    {
+      "trait_type": "Student Name",
+      "value": "Tuong Thai"
+    },
+    {
+      "trait_type": "Student Address",
+      "value": "0x123..."
+    },
+    {
+      "trait_type": "Issuer",
+      "value": "OpenEdu Academy"
+    },
+    {
+      "trait_type": "Issue Date",
+      "value": "2025-04-21",
+      "display_type": "date"
+    },
+    {
+      "trait_type": "Expiration Date",
+      "value": "2030-04-21",
+      "display_type": "date"
+    },
+    {
+      "trait_type": "Course Duration",
+      "value": "12 weeks"
+    },
+    {
+      "trait_type": "Grade",
+      "value": "A"
+    },
+    {
+      "trait_type": "Score",
+      "value": 95,
+      "display_type": "number"
+    },
+    {
+      "trait_type": "Skills",
+      "value": "Solidity, Smart Contracts, DeFi"
+    },
+    {
+      "trait_type": "Certificate ID",
+      "value": "OEC-2025-[tokenId]"
+    }
+  ],
+  "additional_data": {
+    "achievements": ["Completed all assignments", "Top performer", "..."],
+    "instructor": {
+      "name": "Dr. Satoshi",
+      "profile": "https://vbiacademy.edu.vn/en/instructors/satoshi"
+    }
+  }
+}
+```
