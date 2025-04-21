@@ -53,6 +53,7 @@ contract SponsorNFT is ERC721, Ownable2Step, EIP712, ERC721URIStorage {
                             OWNER FUNCTIONS
     //////////////////////////////////////////////////////////////*/
     function updateTokenUri(uint256 tokenId, string memory tokenUri) external onlyOwner {
+        _requireOwned(tokenId);
         _setTokenURI(tokenId, tokenUri);
     }
 
@@ -161,6 +162,7 @@ contract SponsorNFT is ERC721, Ownable2Step, EIP712, ERC721URIStorage {
     }
 
     function tokenURI(uint256 tokenId) public view virtual override(ERC721, ERC721URIStorage) returns (string memory) {
+        _requireOwned(tokenId);
         return super.tokenURI(tokenId);
     }
 }

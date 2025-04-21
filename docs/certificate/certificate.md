@@ -33,8 +33,8 @@ Example Token URI:
 {
     "name": "OpenEdu Certificate: Introduction to Blockchain",
     "description": "This certificate verifies successful completion of Introduction to Blockchain by Tuong Thai",
-    "image": "https://img.freepik.com/free-vector/vintage-achievement-certificate-template-vector-professional-design-blue_53876-157583.jpg",
-    "external_url": "https://vbiacademy.edu.vn/en/courses/web3-development-with-solidity",
+    "image": "[image url]",
+    "external_url": "[course url]",
     "attributes": [
         {
             "trait_type": "Course Name",
