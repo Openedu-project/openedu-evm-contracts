@@ -129,7 +129,6 @@ contract SponsorNFT is ERC721, Ownable2Step, EIP712, ERC721URIStorage {
     /*//////////////////////////////////////////////////////////////
                             GETTER FUNCTIONS
     //////////////////////////////////////////////////////////////*/
-
     function getMessageHash(address account, uint256 tokenId, uint256 nonce, uint256 deadline)
         public
         view
