@@ -14,7 +14,7 @@
   - FeeReceiver: [0xf42a42e4810ca8b7a80fb613c88a8756ad49f2b5](https://sepolia.basescan.org/address/0xf42a42e4810ca8b7a80fb613c88a8756ad49f2b5)
   - CourseLaunchpad: [0x00d2Af3Fb85cEA186006cf379E119219E2102e5e](https://sepolia.basescan.org/address/0x00d2af3fb85cea186006cf379e119219e2102e5e)
   - CourseLaunchpadRefund: [0xdb75C2c839fbcF7D77b6e148431Afb06d0d2ed70](https://sepolia.basescan.org/address/0xdb75c2c839fbcf7d77b6e148431afb06d0d2ed70)
-  - Certificate: [0xdC659966f222B644b9A2B98d0e6Ee65D5f886F82](https://sepolia.basescan.org/address/0xdc659966f222b644b9a2b98d0e6ee65d5f886f82)
+  - Certificate: [0xa6d8ae5b388880e07D12407BF40d3eD73125fe41](https://sepolia.basescan.org/address/0xa6d8ae5b388880e07d12407bf40d3ed73125fe41)
   
 ### Mainnet
 ... 
