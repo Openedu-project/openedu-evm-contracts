@@ -32,7 +32,7 @@ contract TestSponsorNFT is Test {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(ownerPk, hashedMessage);
 
         vm.prank(account);
-        sponsorNFT.mintWithPermit(account, tokenUri, 0, 1745196000, hashedMessage, v, r, s);
+        sponsorNFT.mintWithPermit(account, tokenUri, 0, 1745196000, v, r, s);
 
         assertEq(sponsorNFT.ownerOf(0), account);
         assertEq(sponsorNFT.tokenURI(0), tokenUri);
@@ -44,6 +44,6 @@ contract TestSponsorNFT is Test {
 
         vm.expectRevert();
         vm.prank(account);
-        sponsorNFT.mintWithPermit(account, tokenUri, 0, 1745196000, hashedMessage, v, r, s);
+        sponsorNFT.mintWithPermit(account, tokenUri, 0, 1745196000, v, r, s);
     }
 }

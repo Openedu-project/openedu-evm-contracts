@@ -75,7 +75,6 @@ contract SponsorNFT is ERC721, Ownable2Step, EIP712, ERC721URIStorage {
         string memory tokenUri,
         uint256 nonce,
         uint256 deadline,
-        bytes32 digest,
         uint8 _v,
         bytes32 _r,
         bytes32 _s
@@ -84,6 +83,9 @@ contract SponsorNFT is ERC721, Ownable2Step, EIP712, ERC721URIStorage {
         if (block.timestamp > deadline) {
             revert SponsorNFT__SignatureExpired();
         }
+
+        uint256 tokenId = s_tokenCounter;
+        bytes32 digest = getMessageHash(account, tokenId, nonce, deadline);
 
         // Create a unique identifier for this signature by hashing the digest with the nonce
         bytes32 signatureId = keccak256(abi.encodePacked(digest, nonce));
@@ -100,8 +102,6 @@ contract SponsorNFT is ERC721, Ownable2Step, EIP712, ERC721URIStorage {
 
         // Mark signature as used
         s_usedNonces[signatureId] = true;
-
-        uint256 tokenId = s_tokenCounter;
 
         _setTokenURI(tokenId, tokenUri);
         _mint(account, tokenId);
