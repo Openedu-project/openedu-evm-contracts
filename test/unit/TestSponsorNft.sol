@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import {Test} from "forge-std/Test.sol";
+import {Test, console} from "forge-std/Test.sol";
 import {SponsorNFT} from "src/SponsorNFT.sol";
 
 contract TestSponsorNFT is Test {
@@ -17,6 +17,13 @@ contract TestSponsorNFT is Test {
         (owner, ownerPk) = makeAddrAndKey("owner");
         (account, accountPk) = makeAddrAndKey("account");
         sponsorNFT = new SponsorNFT(owner, "SponsorNFT", "SPN");
+
+        bool hasRoleAdmin = sponsorNFT.hasRole(sponsorNFT.DEFAULT_ADMIN_ROLE(), owner);
+        assertTrue(hasRoleAdmin);
+
+        vm.startPrank(owner);
+        sponsorNFT.grantRole(sponsorNFT.MINTER_ROLE(), owner);
+        vm.stopPrank();
     }
 
     function test_can_mint() public {
