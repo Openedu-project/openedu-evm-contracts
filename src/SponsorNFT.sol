@@ -2,12 +2,13 @@
 pragma solidity 0.8.26;
 
 import {ERC721} from "lib/openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
-import {Ownable2Step, Ownable} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {ERC721URIStorage} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import {AccessControl} from "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
+import {Ownable2Step, Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable2Step.sol";
 
-contract SponsorNFT is ERC721, Ownable2Step, EIP712, ERC721URIStorage {
+contract SponsorNFT is ERC721, EIP712, ERC721URIStorage, AccessControl, Ownable2Step {
     using ECDSA for bytes32;
 
     /*//////////////////////////////////////////////////////////////
@@ -19,12 +20,6 @@ contract SponsorNFT is ERC721, Ownable2Step, EIP712, ERC721URIStorage {
     error SponsorNFT__SignatureExpired();
     error SponsorNFT__SignatureUsed();
 
-    constructor(address initialOwner, string memory name, string memory symbol)
-        Ownable(initialOwner)
-        ERC721(name, symbol)
-        EIP712(name, "1.0.0")
-    {}
-
     /*//////////////////////////////////////////////////////////////
                                   EVENTS
     //////////////////////////////////////////////////////////////*/
@@ -33,6 +28,8 @@ contract SponsorNFT is ERC721, Ownable2Step, EIP712, ERC721URIStorage {
     /*//////////////////////////////////////////////////////////////
                             STATE VARIABLES
     //////////////////////////////////////////////////////////////*/
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+
     struct Approve {
         address account;
         uint256 tokenId;
@@ -50,9 +47,20 @@ contract SponsorNFT is ERC721, Ownable2Step, EIP712, ERC721URIStorage {
     mapping(bytes32 => bool) private s_usedNonces;
 
     /*//////////////////////////////////////////////////////////////
+                              CONSTRUCTOR
+    //////////////////////////////////////////////////////////////*/
+    constructor(address defaultAdmin, string memory name, string memory symbol)
+        Ownable(defaultAdmin)
+        ERC721(name, symbol)
+        EIP712(name, "1.0.0")
+    {
+        _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
+    }
+
+    /*//////////////////////////////////////////////////////////////
                             OWNER FUNCTIONS
     //////////////////////////////////////////////////////////////*/
-    function updateTokenUri(uint256 tokenId, string memory tokenUri) external onlyOwner {
+    function updateTokenUri(uint256 tokenId, string memory tokenUri) external onlyRole(DEFAULT_ADMIN_ROLE) {
         _requireOwned(tokenId);
         _setTokenURI(tokenId, tokenUri);
     }
@@ -60,7 +68,7 @@ contract SponsorNFT is ERC721, Ownable2Step, EIP712, ERC721URIStorage {
     /*//////////////////////////////////////////////////////////////
                               EXTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////*/
-    function mint(address account, string memory tokenUri) public onlyOwner {
+    function mint(address account, string memory tokenUri) public onlyRole(MINTER_ROLE) {
         uint256 tokenId = s_tokenCounter;
 
         _setTokenURI(tokenId, tokenUri);
@@ -155,7 +163,7 @@ contract SponsorNFT is ERC721, Ownable2Step, EIP712, ERC721URIStorage {
         public
         view
         virtual
-        override(ERC721, ERC721URIStorage)
+        override(ERC721, ERC721URIStorage, AccessControl)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
