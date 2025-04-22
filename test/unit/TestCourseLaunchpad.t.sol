@@ -85,22 +85,14 @@ contract CourseLaunchpadPledgeTest is Test {
     function _initNativeLaunchpad() internal {
         vm.prank(launchpadOwner);
         courseLaunchpad.initLaunchpad{value: NATIVE_MIN_PLEDGE}(
-            LAUNCHPAD_NATIVE,
-            launchpadOwner,
-            address(0),
-            NATIVE_GOAL,
-            NATIVE_MIN_PLEDGE
+            LAUNCHPAD_NATIVE, launchpadOwner, address(0), NATIVE_GOAL, NATIVE_MIN_PLEDGE
         );
     }
 
     function _initTokenLaunchpad() internal {
         vm.prank(launchpadOwner);
         courseLaunchpad.initLaunchpad{value: NATIVE_MIN_PLEDGE}(
-            LAUNCHPAD_ERC20,
-            launchpadOwner,
-            address(token),
-            TOKEN_GOAL,
-            TOKEN_MIN_PLEDGE
+            LAUNCHPAD_ERC20, launchpadOwner, address(token), TOKEN_GOAL, TOKEN_MIN_PLEDGE
         );
     }
 
