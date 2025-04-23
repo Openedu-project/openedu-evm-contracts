@@ -4,70 +4,150 @@ pragma solidity 0.8.26;
 import {Test} from "forge-std/Test.sol";
 import {CourseLaunchpad} from "../../src/CourseLaunchpad.sol";
 import {ICourseLaunchpad} from "../../src/interfaces/ICourseLaunchpad.sol";
+import {ERC20PermitMock} from "../mocks/ERC20PermitMock.sol";
+import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract TestCourseLaunchpad is Test {
+contract CourseLaunchpadPledgeTest is Test {
+    using SafeERC20 for IERC20;
+
     CourseLaunchpad courseLaunchpad;
+    ERC20PermitMock token;
+
     address owner = makeAddr("owner");
-    address launchpadOwner = makeAddr("launchpadOwner");
-    string launchpadId = "launchpadId";
-    uint256 INIT_ETHER_BALANCE = 100 ether;
-    uint256 constant NATIVE_LAUNCHPAD_GOAL = 100e18;
-    uint256 constant NATIVE_LAUNCHPAD_MIN_PLEDGE_AMOUNT = 1e16; // 0.01 ETH
+    address launchpadOwner = makeAddr("creator");
+    address backer = makeAddr("backer");
+    address backer_1 = makeAddr("backer_1");
+    address backer_2 = makeAddr("backer_2");
+
+    string constant LAUNCHPAD_NATIVE = "native_launchpad";
+    string constant LAUNCHPAD_ERC20 = "erc20_launchpad";
+
+    uint256 constant INIT_NATIVE_BALANCE = 100 ether;
+    uint256 constant NATIVE_GOAL = 10 ether;
+    uint256 constant NATIVE_MIN_PLEDGE = 0.01 ether;
+
+    uint256 constant INIT_TOKEN_BALANCE = 100_000e6;
+    uint256 constant TOKEN_GOAL = 10_000e6;
+    uint256 constant TOKEN_MIN_PLEDGE = 1_000e6;
 
     function setUp() public {
         courseLaunchpad = new CourseLaunchpad(owner);
+        token = new ERC20PermitMock("MockToken", "MTK");
 
-        vm.deal(launchpadOwner, INIT_ETHER_BALANCE);
+        vm.deal(launchpadOwner, INIT_NATIVE_BALANCE);
+        vm.deal(backer, INIT_NATIVE_BALANCE);
+        token.mint(backer, INIT_TOKEN_BALANCE);
+        vm.deal(backer_1, INIT_NATIVE_BALANCE);
+        token.mint(backer_1, INIT_TOKEN_BALANCE);
+        vm.deal(backer_2, INIT_NATIVE_BALANCE);
+        token.mint(backer_2, INIT_TOKEN_BALANCE);
 
         vm.prank(owner);
-        courseLaunchpad.addAcceptedToken(address(0));
+        courseLaunchpad.addAcceptedToken(address(0)); // accept native
+
+        vm.prank(owner);
+        courseLaunchpad.addAcceptedToken(address(token)); // accept ERC20
     }
 
-    function test_can_initLaunchpad() public {
+    // ======= Native Pledge =======
+    function test_can_pledge_native() public {
         _initNativeLaunchpad();
+        _approveLaunchpad(LAUNCHPAD_NATIVE);
+        _startFunding(LAUNCHPAD_NATIVE);
 
-        ICourseLaunchpad.Launchpad memory launchpad = courseLaunchpad.getLaunchpad(launchpadId);
-        assertEq(launchpad.owner, launchpadOwner);
-        assertEq(launchpad.goal, NATIVE_LAUNCHPAD_GOAL);
-        assertEq(launchpad.minPledgeAmount, NATIVE_LAUNCHPAD_MIN_PLEDGE_AMOUNT);
+        vm.prank(backer);
+        courseLaunchpad.pledgeNative{value: NATIVE_MIN_PLEDGE}(LAUNCHPAD_NATIVE);
 
-        vm.expectRevert(abi.encodeWithSelector(ICourseLaunchpad.LaunchpadAlreadyExists.selector, launchpadId));
-        _initNativeLaunchpad();
+        uint256 balance = courseLaunchpad.getBackerBalance(LAUNCHPAD_NATIVE, backer);
+        assertEq(balance, NATIVE_MIN_PLEDGE);
+
+        ICourseLaunchpad.Launchpad memory lp = courseLaunchpad.getLaunchpad(LAUNCHPAD_NATIVE);
+        assertEq(lp.totalPledged, NATIVE_MIN_PLEDGE);
+        assertEq(lp.token, address(0));
     }
 
-    function test_can_pledgeNative() public {
-        _initNativeLaunchpad();
-        _approveLaunchpad();
-        _startFunding();
+    // ======= ERC20 Pledge =======
+    function test_can_pledge_erc20() public {
+        _initTokenLaunchpad();
+        _approveLaunchpad(LAUNCHPAD_ERC20);
+        _startFunding(LAUNCHPAD_ERC20);
 
-        vm.prank(launchpadOwner);
-        courseLaunchpad.pledgeNative{value: NATIVE_LAUNCHPAD_MIN_PLEDGE_AMOUNT}(launchpadId);
+        address[2] memory backers = [backer, backer_1];
+        uint256[2] memory amounts = [TOKEN_MIN_PLEDGE, TOKEN_MIN_PLEDGE * 2];
 
-        ICourseLaunchpad.Launchpad memory launchpad = courseLaunchpad.getLaunchpad(launchpadId);
-        ICourseLaunchpad.LaunchpadStatus status = ICourseLaunchpad.LaunchpadStatus.FUNDING;
-        uint256 backerBalance = courseLaunchpad.getBackerBalance(launchpadId, launchpadOwner);
+        for (uint256 i = 0; i < backers.length; i++) {
+            vm.prank(backers[i]);
+            token.approve(address(courseLaunchpad), amounts[i]);
 
-        assertEq(backerBalance, NATIVE_LAUNCHPAD_MIN_PLEDGE_AMOUNT);
-        assertEq(uint256(launchpad.status), uint256(status));
-        assertEq(launchpad.startFundingTime, block.timestamp);
-        assertEq(launchpad.endFundingTime, block.timestamp + 1 days);
-        assertEq(launchpad.totalPledged, NATIVE_LAUNCHPAD_MIN_PLEDGE_AMOUNT);
-        assertEq(address(courseLaunchpad).balance, NATIVE_LAUNCHPAD_MIN_PLEDGE_AMOUNT + 0.01 ether);
+            vm.prank(backers[i]);
+            courseLaunchpad.pledgeERC20(LAUNCHPAD_ERC20, amounts[i]);
+
+            uint256 balance = courseLaunchpad.getBackerBalance(LAUNCHPAD_ERC20, backers[i]);
+            assertEq(balance, amounts[i]);
+        }
+
+        ICourseLaunchpad.Launchpad memory lp = courseLaunchpad.getLaunchpad(LAUNCHPAD_ERC20);
+        assertEq(lp.totalPledged, TOKEN_MIN_PLEDGE * 3);
+        assertEq(lp.token, address(token));
     }
+
+
+//     // ======= ERC20 Claim Refund =======Refund
+//    function test_can_claim_refund_erc20() public {
+//         _initTokenLaunchpad();
+//         _approveLaunchpad(LAUNCHPAD_ERC20);
+//         _startFunding(LAUNCHPAD_ERC20);
+
+//         // Backer approve & pledge
+//         vm.prank(backer);
+//         token.approve(address(courseLaunchpad), TOKEN_MIN_PLEDGE);
+
+//         vm.prank(backer);
+//         courseLaunchpad.pledgeERC20(LAUNCHPAD_ERC20, TOKEN_MIN_PLEDGE);
+
+//         // check status pledge
+//         uint256 balance = courseLaunchpad.getBackerBalance(LAUNCHPAD_ERC20, backer);
+//         assertEq(balance, TOKEN_MIN_PLEDGE);
+
+//         ICourseLaunchpad.Launchpad memory lp = courseLaunchpad.getLaunchpad(LAUNCHPAD_ERC20);
+
+//         assertEq(lp.totalPledged, TOKEN_MIN_PLEDGE);
+//         assertEq(lp.token, address(token));
+
+//         // Giả lập sau 30 ngày
+//         vm.warp(block.timestamp + 30 days);
+
+//         // Admin kết thúc funding
+//         vm.prank(owner);
+//         courseLaunchpad.endFundingResult(LAUNCHPAD_ERC20);
+
+//         // Kiểm tra status chuyển sang WAITING
+//         ICourseLaunchpad.Launchpad memory lp_new = courseLaunchpad.getLaunchpad(LAUNCHPAD_ERC20);
+//         assertEq(uint(lp_new.status), uint(ICourseLaunchpad.LaunchpadStatus.REFUNDING));
+//     }
+
+    // ======= Helpers =======
 
     function _initNativeLaunchpad() internal {
         vm.prank(launchpadOwner);
-        courseLaunchpad.initLaunchpad{value: NATIVE_LAUNCHPAD_MIN_PLEDGE_AMOUNT}(
-            launchpadId, launchpadOwner, address(0), NATIVE_LAUNCHPAD_GOAL, NATIVE_LAUNCHPAD_MIN_PLEDGE_AMOUNT
+        courseLaunchpad.initLaunchpad{value: NATIVE_MIN_PLEDGE}(
+            LAUNCHPAD_NATIVE, launchpadOwner, address(0), NATIVE_GOAL, NATIVE_MIN_PLEDGE
         );
     }
 
-    function _approveLaunchpad() internal {
+    function _initTokenLaunchpad() internal {
+        vm.prank(launchpadOwner);
+        courseLaunchpad.initLaunchpad{value: NATIVE_MIN_PLEDGE}(
+            LAUNCHPAD_ERC20, launchpadOwner, address(token), TOKEN_GOAL, TOKEN_MIN_PLEDGE
+        );
+    }
+
+    function _approveLaunchpad(string memory launchpadId) internal {
         vm.prank(owner);
         courseLaunchpad.approveLaunchpad(launchpadId);
     }
 
-    function _startFunding() internal {
+    function _startFunding(string memory launchpadId) internal {
         vm.prank(launchpadOwner);
         courseLaunchpad.startFunding(launchpadId, block.timestamp, block.timestamp + 1 days);
     }

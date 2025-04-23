@@ -179,7 +179,7 @@ contract CourseLaunchpad is ICourseLaunchpad, Ownable2Step {
         if (launchpad.raised >= launchpad.goal) {
             newStatus = LaunchpadStatus.VOTING;
         } else if (launchpad.raised > 0) {
-            uint256 requiredVotingAmount = (launchpad.raised * s_requiredVotingBps) / 10000;
+            uint256 requiredVotingAmount = (launchpad.goal * s_requiredVotingBps) / 10000;
             if (launchpad.raised >= requiredVotingAmount) {
                 newStatus = LaunchpadStatus.WAITING;
             } else {
