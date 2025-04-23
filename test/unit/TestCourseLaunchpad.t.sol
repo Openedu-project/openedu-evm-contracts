@@ -91,39 +91,39 @@ contract CourseLaunchpadPledgeTest is Test {
         assertEq(lp.token, address(token));
     }
 
-    //     // ======= ERC20 Claim Refund =======Refund
-    //    function test_can_claim_refund_erc20() public {
-    //         _initTokenLaunchpad();
-    //         _approveLaunchpad(LAUNCHPAD_ERC20);
-    //         _startFunding(LAUNCHPAD_ERC20);
+        // ======= ERC20 Claim Refund =======
+       function test_not_claim_refund_erc20_result_to_refunding() public {
+            _initTokenLaunchpad();
+            _approveLaunchpad(LAUNCHPAD_ERC20);
+            _startFunding(LAUNCHPAD_ERC20);
 
-    //         // Backer approve & pledge
-    //         vm.prank(backer);
-    //         token.approve(address(courseLaunchpad), TOKEN_MIN_PLEDGE);
+            // Backer approve & pledge
+            vm.prank(backer);
+            token.approve(address(courseLaunchpad), TOKEN_MIN_PLEDGE);
 
-    //         vm.prank(backer);
-    //         courseLaunchpad.pledgeERC20(LAUNCHPAD_ERC20, TOKEN_MIN_PLEDGE);
+            vm.prank(backer);
+            courseLaunchpad.pledgeERC20(LAUNCHPAD_ERC20, TOKEN_MIN_PLEDGE);
 
-    //         // check status pledge
-    //         uint256 balance = courseLaunchpad.getBackerBalance(LAUNCHPAD_ERC20, backer);
-    //         assertEq(balance, TOKEN_MIN_PLEDGE);
+            // check status pledge
+            uint256 balance = courseLaunchpad.getBackerBalance(LAUNCHPAD_ERC20, backer);
+            assertEq(balance, TOKEN_MIN_PLEDGE);
 
-    //         ICourseLaunchpad.Launchpad memory lp = courseLaunchpad.getLaunchpad(LAUNCHPAD_ERC20);
+            ICourseLaunchpad.Launchpad memory lp = courseLaunchpad.getLaunchpad(LAUNCHPAD_ERC20);
 
-    //         assertEq(lp.totalPledged, TOKEN_MIN_PLEDGE);
-    //         assertEq(lp.token, address(token));
+            assertEq(lp.totalPledged, TOKEN_MIN_PLEDGE);
+            assertEq(lp.token, address(token));
 
-    //         // Giả lập sau 30 ngày
-    //         vm.warp(block.timestamp + 30 days);
+            // Giả lập sau 30 ngày
+            vm.warp(block.timestamp + 30 days);
 
-    //         // Admin kết thúc funding
-    //         vm.prank(owner);
-    //         courseLaunchpad.endFundingResult(LAUNCHPAD_ERC20);
+            // Admin kết thúc funding
+            vm.prank(owner);
+            courseLaunchpad.endFundingResult(LAUNCHPAD_ERC20);
 
-    //         // Kiểm tra status chuyển sang WAITING
-    //         ICourseLaunchpad.Launchpad memory lp_new = courseLaunchpad.getLaunchpad(LAUNCHPAD_ERC20);
-    //         assertEq(uint(lp_new.status), uint(ICourseLaunchpad.LaunchpadStatus.REFUNDING));
-    //     }
+            // Kiểm tra status chuyển sang WAITING
+            ICourseLaunchpad.Launchpad memory lp_new = courseLaunchpad.getLaunchpad(LAUNCHPAD_ERC20);
+            assertEq(uint(lp_new.status), uint(ICourseLaunchpad.LaunchpadStatus.REFUNDING));
+        }
 
     // ======= Helpers =======
 
