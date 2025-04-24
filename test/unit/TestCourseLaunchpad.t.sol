@@ -18,6 +18,8 @@ contract CourseLaunchpadPledgeTest is Test {
     address backer = makeAddr("backer");
     address backer_1 = makeAddr("backer_1");
     address backer_2 = makeAddr("backer_2");
+    address backer_3 = makeAddr("backer_3");
+    address backer_4 = makeAddr("backer_4");
 
     string constant LAUNCHPAD_NATIVE = "native_launchpad";
     string constant LAUNCHPAD_ERC20 = "erc20_launchpad";
@@ -34,13 +36,14 @@ contract CourseLaunchpadPledgeTest is Test {
         courseLaunchpad = new CourseLaunchpad(owner);
         token = new ERC20PermitMock("MockToken", "MTK");
 
-        vm.deal(launchpadOwner, INIT_NATIVE_BALANCE);
-        vm.deal(backer, INIT_NATIVE_BALANCE);
-        token.mint(backer, INIT_TOKEN_BALANCE);
-        vm.deal(backer_1, INIT_NATIVE_BALANCE);
-        token.mint(backer_1, INIT_TOKEN_BALANCE);
-        vm.deal(backer_2, INIT_NATIVE_BALANCE);
-        token.mint(backer_2, INIT_TOKEN_BALANCE);
+        address[6] memory backers = [launchpadOwner, backer, backer_1, backer_2, backer_3, backer_4];
+
+        for (uint256 i = 0; i < backers.length; i++) {
+            vm.deal(backers[i], INIT_NATIVE_BALANCE);
+            if (backers[i] != launchpadOwner) {
+                token.mint(backers[i], INIT_TOKEN_BALANCE);
+            }
+        }
 
         vm.prank(owner);
         courseLaunchpad.addAcceptedToken(address(0)); // accept native
@@ -48,6 +51,7 @@ contract CourseLaunchpadPledgeTest is Test {
         vm.prank(owner);
         courseLaunchpad.addAcceptedToken(address(token)); // accept ERC20
     }
+
 
     // ======= Native Pledge =======
     function test_can_pledge_native() public {
@@ -91,7 +95,9 @@ contract CourseLaunchpadPledgeTest is Test {
         assertEq(lp.token, address(token));
     }
 
-    // ======= ERC20 Claim Refund =======
+    // ======= ERC20 Check EndFundingResult =======
+
+    // check_end_funding_to_refunding
     function test_not_claim_refund_erc20_result_to_refunding() public {
         _initTokenLaunchpad();
         _approveLaunchpad(LAUNCHPAD_ERC20);
@@ -113,17 +119,52 @@ contract CourseLaunchpadPledgeTest is Test {
         assertEq(lp.totalPledged, TOKEN_MIN_PLEDGE);
         assertEq(lp.token, address(token));
 
-        // Giả lập sau 30 ngày
+        // after 30 days
         vm.warp(block.timestamp + 30 days);
 
-        // Admin kết thúc funding
+        // Admin check end funding
         vm.prank(owner);
         courseLaunchpad.endFundingResult(LAUNCHPAD_ERC20);
 
-        // Kiểm tra status chuyển sang WAITING
+        // check status funding to REFUNDING
         ICourseLaunchpad.Launchpad memory lp_new = courseLaunchpad.getLaunchpad(LAUNCHPAD_ERC20);
         assertEq(uint256(lp_new.status), uint256(ICourseLaunchpad.LaunchpadStatus.REFUNDING));
     }
+
+    // check_end_funding_to_waiting
+    function test_not_claim_refund_erc20_result_to_waiting() public {
+         _initTokenLaunchpad();
+        _approveLaunchpad(LAUNCHPAD_ERC20);
+        _startFunding(LAUNCHPAD_ERC20);
+
+        address[4] memory backers = [backer, backer_1, backer_2, backer_3];
+        uint256[4] memory amounts = [TOKEN_MIN_PLEDGE * 2, TOKEN_MIN_PLEDGE * 2, TOKEN_MIN_PLEDGE * 2, TOKEN_MIN_PLEDGE * 2];
+
+        for (uint256 i = 0; i < backers.length; i++) {
+            vm.prank(backers[i]);
+            token.approve(address(courseLaunchpad), amounts[i]);
+
+            vm.prank(backers[i]);
+            courseLaunchpad.pledgeERC20(LAUNCHPAD_ERC20, amounts[i]);
+        }
+
+        ICourseLaunchpad.Launchpad memory lp = courseLaunchpad.getLaunchpad(LAUNCHPAD_ERC20);
+
+        assertEq(lp.totalPledged, TOKEN_MIN_PLEDGE * 8);
+        assertEq(lp.token, address(token));
+
+        // after 30 days
+        vm.warp(block.timestamp + 30 days);
+
+        // Admin check end funding
+        vm.prank(owner);
+        courseLaunchpad.endFundingResult(LAUNCHPAD_ERC20);
+
+        // Check status funding to WAITING
+        ICourseLaunchpad.Launchpad memory lp_new = courseLaunchpad.getLaunchpad(LAUNCHPAD_ERC20);
+        assertEq(uint256(lp_new.status), uint256(ICourseLaunchpad.LaunchpadStatus.WAITING));
+    }
+
 
     // ======= Helpers =======
 
