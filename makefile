@@ -40,6 +40,11 @@ deploy-certificate:
 	@echo "🚀 Deploying Certificate contract to ${NETWORK}..."
 	@forge script script/deploy/DeployCertificate.s.sol:DeployCertificate --account ${ACCOUNT_CAST_WALLET} --rpc-url ${NETWORK} --etherscan-api-key ${BASESCAN_API_KEY} --broadcast --verify -vvvv
 
+# Deploy badge contract
+deploy-badge:
+	@echo "🚀 Deploying Badge contract to ${NETWORK}..."
+	@forge script script/deploy/DeployBadge.s.sol:DeployBadge --account ${ACCOUNT_CAST_WALLET} --rpc-url ${NETWORK} --etherscan-api-key ${BASESCAN_API_KEY} --broadcast --verify -vvvv
+
 # Clean artifacts and cache
 clean:
 	@echo "🧹 Cleaning..."

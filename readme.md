@@ -21,3 +21,6 @@
 - Base:
   - Certificate: [0x420adAd0e1DB47D4e3fffD834c7c003AB14934ba](https://basescan.org/address/0x420adAd0e1DB47D4e3fffD834c7c003AB14934ba)
     - Owner: 0x19b970Aa6038Cb582EE191A49B3978ceEd255815 [Terran Hold Key]
+  - Badge: [0xA278DF5A2E5B136916C2c62851A717C64d9E6cE3](https://basescan.org/address/0xA278DF5A2E5B136916C2c62851A717C64d9E6cE3)
+    - Owner: 0x19b970Aa6038Cb582EE191A49B3978ceEd255815 [Terran Hold Key]
+    
