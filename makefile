@@ -45,6 +45,11 @@ deploy-badge:
 	@echo "🚀 Deploying Badge contract to ${NETWORK}..."
 	@forge script script/deploy/DeployBadge.s.sol:DeployBadge --account ${ACCOUNT_CAST_WALLET} --rpc-url ${NETWORK} --etherscan-api-key ${BASESCAN_API_KEY} --broadcast --verify -vvvv
 
+# Grant role
+grant-role:
+	@echo "🚀 Granting role to ${NETWORK}..."
+	@forge script script/interactions/GrantRole.s.sol:GrantRole --account ${ACCOUNT_CAST_WALLET} --rpc-url ${NETWORK} --broadcast -vvvv
+
 # Clean artifacts and cache
 clean:
 	@echo "🧹 Cleaning..."
