@@ -24,3 +24,16 @@
   - Badge: [0xA278DF5A2E5B136916C2c62851A717C64d9E6cE3](https://basescan.org/address/0xA278DF5A2E5B136916C2c62851A717C64d9E6cE3)
     - Owner: 0x19b970Aa6038Cb582EE191A49B3978ceEd255815 [Terran Hold Key]
     
+
+## Verify Contract
+
+```bash
+forge verify-contract \
+    0xA278DF5A2E5B136916C2c62851A717C64d9E6cE3 \
+    src/SponsorNFT.sol:SponsorNFT \
+    --etherscan-api-key ${ETHERSCAN_API_KEY} \
+    --chain 8453 \
+    --rpc-url ${BASE_MAINNET_RPC_URL} \
+    --constructor-args $(cast abi-encode "constructor(address,string,string)" 0x19b970Aa6038Cb582EE191A49B3978ceEd255815 "OpenEdu Badge" "OEB") \
+    --watch
+```
