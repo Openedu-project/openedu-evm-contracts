@@ -19,8 +19,21 @@
 ### Mainnet
 
 - Base:
-  - Certificate: [0x420adAd0e1DB47D4e3fffD834c7c003AB14934ba](https://basescan.org/address/0x420adAd0e1DB47D4e3fffD834c7c003AB14934ba)
+  - Certificate: [0x1cc085A6b7c12167359D026fa044a18364380C89](https://basescan.org/address/0x1cc085A6b7c12167359D026fa044a18364380C89)
     - Owner: 0x19b970Aa6038Cb582EE191A49B3978ceEd255815 [Terran Hold Key]
   - Badge: [0xA278DF5A2E5B136916C2c62851A717C64d9E6cE3](https://basescan.org/address/0xA278DF5A2E5B136916C2c62851A717C64d9E6cE3)
     - Owner: 0x19b970Aa6038Cb582EE191A49B3978ceEd255815 [Terran Hold Key]
     
+
+## Verify Contract
+
+```bash
+forge verify-contract \
+    0xA278DF5A2E5B136916C2c62851A717C64d9E6cE3 \
+    src/SponsorNFT.sol:SponsorNFT \
+    --etherscan-api-key ${ETHERSCAN_API_KEY} \
+    --chain 8453 \
+    --rpc-url ${BASE_MAINNET_RPC_URL} \
+    --constructor-args $(cast abi-encode "constructor(address,string,string)" 0x19b970Aa6038Cb582EE191A49B3978ceEd255815 "OpenEdu Badge" "OEB") \
+    --watch
+```
