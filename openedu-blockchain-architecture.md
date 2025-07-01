@@ -194,7 +194,6 @@ type WalletStrategy interface {
 2. Creator deposits ETH
 3. Student mints NFT
 4. Gas fee deducted from sponsor wallet
-5. If insufficient → fallback to paymaster
 ```
 
 ### 5. 💳 Payment System
@@ -451,9 +450,9 @@ OPENEDU_CHAIN_MAINNET=false
 
 **Blockchain Service (.env):**
 ```bash
-# Private Keys (KMS Encrypted)
-PLATFORM_PRIVATE_KEY_TESTNET=encrypted_key
-PLATFORM_PRIVATE_KEY_MAINNET=encrypted_key
+# Private Keys
+PLATFORM_PRIVATE_KEY_TESTNET=
+PLATFORM_PRIVATE_KEY_MAINNET=
 ```
 
 ## 🔧 Troubleshooting
@@ -569,18 +568,6 @@ rabbitmqctl list_queues name message_stats.publish_details.rate
 - Wallet sync failures
 - RPC endpoint downtime
 - Database connection failures
-
-**Log Patterns to Watch:**
-```bash
-# Transaction failures
-tail -f /var/log/openedu-blockchain/app.log | grep "failed\|error"
-
-# Queue processing
-tail -f /var/log/openedu-*/app.log | grep "worker ID"
-
-# Network issues
-tail -f /var/log/openedu-blockchain/app.log | grep "RPC\|network"
-```
 
 ### Performance Optimization
 
